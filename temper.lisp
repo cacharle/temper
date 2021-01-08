@@ -21,25 +21,39 @@
         (append (list (list 'string before) (list 'code code)) (lex input))))))
 
 
+(defun tokens-to-code-string (tokens)
+  (apply #'concatenate 'string
+    (map
+      'list
+      #'(lambda (token)
+         (let ((token-type    (first token))
+               (token-content (second token)))
+             (if (eql token-type 'string)
+               (format nil "~S"
+                 `(setf buf (concatenate
+                              'string
+                              buf
+                             ,(string-trim '(#\linefeed #\space) token-content)
+                             '(#\linefeed))))
+                token-content)))
+      tokens)))
+
 (defun generate (tokens)
   `(progn
     (setq buf "")
     (eval ,(read-from-string
       (concatenate 'string
-        (map
-          'string
-          #'(lambda (token)
-             (let ((token-type    (first token))
-                   (token-content (second token)))
-                 (if (eql token-type 'string)
-                   (format nil "~A"
-                     `(setf buf (concatenate 'string buf ,token-content)))
-                   token-content)))
-          tokens))))))
+        "(progn "
+        (tokens-to-code-string tokens)
+        ")")))))
+
 
 
 (setq res (generate (lex (read-all))))
-(setq str (format t "~{~A~^ ~}" res))
+(format t "~A" (eval res))
+; (setq str (format t "~{~S~^ ~}" res))
+
+
 
 ; (princ str)
 
