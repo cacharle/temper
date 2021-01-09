@@ -1,14 +1,8 @@
-(defun read-all ()
-  (let ((line (read-line *standard-input* nil)))
-    (if line
-      (concatenate 'string line '(#\linefeed) (read-all))
-      "")))
+#!/usr/bin/env clisp
 
+(load "helper.lisp")
+(load "config.lisp")
 
-(defconstant +temper-open+ "<%")
-(defconstant +temper-close+ "%>")
-(defconstant +temper-close-len+ (length +temper-close+))
-(defconstant +temper-interpolate+ #\=)
 
 (defun lex (input)
   (let ((pos (search +temper-open+ input)))
@@ -50,14 +44,6 @@
       tokens)))
 
 
-(defun rest-keys (&rest args)
-  (if (null args)
-    '()
-    (destructuring-bind (key value &rest args) args
-      (cons (list key value) (apply #'rest-keys args)))))
-
-
-
 (defun generate (tokens &rest args)
   `(let ,(apply #'rest-keys args)
      (progn
@@ -69,12 +55,15 @@
           ")"))))))
 
 
-(setq tokens (lex (read-all)))
-(setq code (generate tokens 'foo "bonjour" 'bar "aurevoir"))
-; (format t "~S" code)
-(princ (eval code))
-; (setq res (generate (lex (read-all))))
-; (format t "~A" (eval res))
+(defun render-stream (stream &rest args)
+  (setq tokens (lex (read-all-stream stream)))
+  (eval (apply #'generate (cons tokens args))))
+
+(defun render (filename &rest args)
+  (with-open-file (stream filename)
+    (apply #'render-stream (cons stream args))))
 
 
-; (format t "~S" (rest-keys :baz 10 :foo 4 :bar 5))
+; (princ (render-stream *standard-input* 'foo "bon" 'bar "jour"))
+
+(princ (render "test.html" 'foo "bon" 'bar "jour"))
