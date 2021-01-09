@@ -42,27 +42,39 @@
                   `(setf buf
                     (concatenate 'string
                                  buf
-                                 (format nil "~A" ,(read-from-string token-content))
-                                 '(#\linefeed)))))
+                                 (format nil "~A" ,(read-from-string token-content))))))
                ((eql token-type 'string)
                 (format nil "~S"
                   `(setf buf
-                    (concatenate 'string
-                                 buf
-                                 ,(string-trim '(#\linefeed #\space) token-content)
-                                 '(#\linefeed))))))))
+                    (concatenate 'string buf ,(string-trim '(#\linefeed) token-content))))))))
       tokens)))
 
-(defun generate (tokens)
-  `(progn
-    (setq buf "")
-    (eval ,(read-from-string
-      (concatenate 'string
-        "(progn "
-        (tokens-to-code-string tokens)
-        ")")))))
+
+(defun rest-keys (&rest args)
+  (if (null args)
+    '()
+    (destructuring-bind (key value &rest args) args
+      (cons (list key value) (apply #'rest-keys args)))))
 
 
-; (format t "~A" (tokens-to-code-string (lex (read-all))))
-(setq res (generate (lex (read-all))))
-(format t "~A" (eval res))
+
+(defun generate (tokens &rest args)
+  `(let ,(apply #'rest-keys args)
+     (progn
+      (setq buf "")
+      (eval ,(read-from-string
+        (concatenate 'string
+          "(progn "
+          (tokens-to-code-string tokens)
+          ")"))))))
+
+
+(setq tokens (lex (read-all)))
+(setq code (generate tokens 'foo "bonjour" 'bar "aurevoir"))
+; (format t "~S" code)
+(princ (eval code))
+; (setq res (generate (lex (read-all))))
+; (format t "~A" (eval res))
+
+
+; (format t "~S" (rest-keys :baz 10 :foo 4 :bar 5))

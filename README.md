@@ -13,4 +13,4 @@ Common Listp templating language.
 ## TODO
 
 * [x] value interpolation (e.g `<%= link %>`)
-* [ ] insert variable in local scope
+* [x] inject variable in local scope
