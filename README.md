@@ -21,8 +21,8 @@ Put the result of a form in the template with `<%=`.
 
 ```html
 <ul>
-  <% (dotimes (_ 10)) %>
-    <li> <%= i %> </li>
+  <% (dotimes (n 10)) %>
+    <li> <%= n %> </li>
   <% ) %>
 </ul>
 ```
@@ -49,3 +49,6 @@ Use the `render` function to include a template in another.
       and check if `about.lisp.html` exists
 * [ ] Makefile to compile and install
 * [ ] escape interpolated value
+* [ ] file/directory command line arguments
+* [ ] passing template variable in command line
+* [ ] extends a base template (like Django)

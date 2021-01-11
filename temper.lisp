@@ -1,5 +1,7 @@
 #!/usr/bin/clisp
 
+(load "/home/charles/.clisprc.lisp")
+(ql:quickload "uiop")
 (load "helper.lisp")
 (load "config.lisp")
 (load "builtin.lisp")
@@ -60,16 +62,28 @@
           ")"))))))
 
 
-(defun render-stream (stream &rest args)
-  (setq tokens (lex (read-all-stream stream)))
-  (eval (apply #'generate (cons tokens args))))
+(defgeneric render (input &rest args))
 
-(defun render (filename &rest args)
-  (with-open-file (stream filename)
-    (apply #'render-stream (cons stream args))))
+(defmethod render ((input stream) &rest args)
+  (prog1
+    (eval (apply #'generate (cons (lex (read-all-stream input)) args)))
+    (setf *temper-buf* "")))
 
-(princ (render-stream *standard-input* 'foo "bon" 'bar "jour"))
+(defmethod render ((filename string) &rest args)
+  (with-open-file (input filename)
+    (apply #'render (cons input args))))
 
-; (princ (render "test.html" 'foo "bon" 'bar "jour"))
 
-; (print (make-index "d"))
+(when (null *args*)
+  (princ (render *standard-input*))
+  (exit))
+
+
+(dolist (arg *args*)
+  (if (uiop:directory-pathname-p arg)
+    (uiop:collect-sub*directories ; TODO
+      dirname
+      (constantly t)
+      (constantly t)
+      (lambda (f) (print f)))
+    (princ (render arg))))

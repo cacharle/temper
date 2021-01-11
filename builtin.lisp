@@ -1,7 +1,3 @@
-(load "/home/charles/.clisprc.lisp")
-(ql:quickload "uiop")
-
-
 (defun make-index (dirname &key (item-tag "li") (surrounding-tag "ul") (include-date nil))
   (setf filepaths (uiop:directory-files dirname))
   ; (when test (delete-if #'(lambda (x) (not (test x))) filenames))
