@@ -1,7 +1,8 @@
-#!/usr/bin/env clisp
+#!/usr/bin/clisp
 
 (load "helper.lisp")
 (load "config.lisp")
+(load "builtin.lisp")
 
 
 (defun lex (input)
@@ -22,6 +23,9 @@
           (lex input))))))
 
 
+; (defun temper-buf-push (&rest strings)
+;   (setf *temper-buf
+
 (defun tokens-to-code-string (tokens)
   (apply #'concatenate 'string
     (map
@@ -29,25 +33,26 @@
       #'(lambda (token)
          (let ((token-type    (first token))
                (token-content (second token)))
-             (cond
-               ((eql token-type 'code) token-content)
-               ((eql token-type 'interpolation)
+             (ecase token-type
+               ('code token-content)
+               ('interpolation
                 (format nil "~S"
-                  `(setf buf
+                  `(setf *temper-buf*
                     (concatenate 'string
-                                 buf
+                                 *temper-buf*
                                  (format nil "~A" ,(read-from-string token-content))))))
-               ((eql token-type 'string)
+               ('string
                 (format nil "~S"
-                  `(setf buf
-                    (concatenate 'string buf ,(string-trim '(#\linefeed) token-content))))))))
+                  `(setf *temper-buf*
+                    (concatenate 'string *temper-buf* ,(string-trim '(#\linefeed) token-content))))))))
       tokens)))
 
+
+(defvar *temper-buf* "")
 
 (defun generate (tokens &rest args)
   `(let ,(apply #'rest-keys args)
      (progn
-      (setq buf "")
       (eval ,(read-from-string
         (concatenate 'string
           "(progn "
@@ -63,7 +68,8 @@
   (with-open-file (stream filename)
     (apply #'render-stream (cons stream args))))
 
+(princ (render-stream *standard-input* 'foo "bon" 'bar "jour"))
 
-; (princ (render-stream *standard-input* 'foo "bon" 'bar "jour"))
+; (princ (render "test.html" 'foo "bon" 'bar "jour"))
 
-(princ (render "test.html" 'foo "bon" 'bar "jour"))
+; (print (make-index "d"))
